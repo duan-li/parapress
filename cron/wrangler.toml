@@ -8,6 +8,6 @@ crons = ["*/10 * * * *"]
 
 [vars]
 # Main site revalidate endpoint (without the secret). Update to the real domain after deploy.
-REVALIDATE_URL = "https://parapress.parapulse.io/api/revalidate"
+REVALIDATE_URL = "https://press.parapulse.io/api/revalidate"
 
 # REVALIDATE_SECRET is a secret; set it with `wrangler secret put REVALIDATE_SECRET` (CI syncs it automatically).
