@@ -1,0 +1,13 @@
+name = "parapress-cron"
+main = "src/index.ts"
+compatibility_date = "2024-12-30"
+
+# Fires every 10 minutes: publishes any scheduled posts that are due (matches the main site's ISR period; each is a fallback for the other).
+[triggers]
+crons = ["*/10 * * * *"]
+
+[vars]
+# Main site revalidate endpoint (without the secret). Update to the real domain after deploy.
+REVALIDATE_URL = "https://parapress.parapulse.io/api/revalidate"
+
+# REVALIDATE_SECRET is a secret; set it with `wrangler secret put REVALIDATE_SECRET` (CI syncs it automatically).

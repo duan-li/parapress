@@ -1,0 +1,62 @@
+name: Deploy parapress
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**'
+      - '!**/*.md'
+  workflow_dispatch:
+
+concurrency:
+  group: parapress-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Quality gate
+        run: |
+          pnpm lint
+          pnpm typecheck
+
+      # 1) Run D1 migrations first (idempotent: already-applied migrations are skipped)
+      - name: Apply D1 migrations (remote)
+        run: pnpm dlx wrangler d1 migrations apply parapress --remote
+
+      # 2) Sync secrets on every deploy to ensure consistency
+      - name: Sync REVALIDATE_SECRET
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          if [ -n "$REVALIDATE_SECRET" ]; then
+            echo "$REVALIDATE_SECRET" | pnpm dlx wrangler secret put REVALIDATE_SECRET
+            echo "$REVALIDATE_SECRET" | pnpm dlx wrangler secret put REVALIDATE_SECRET --config cron/wrangler.toml
+          fi
+
+      # 3) Build and deploy the Next.js app (OpenNext → Cloudflare Workers)
+      - name: Build & deploy app
+        run: pnpm cf:deploy
+
+      # 4) Deploy the cron worker
+      - name: Deploy cron worker
+        run: pnpm dlx wrangler deploy --config cron/wrangler.toml

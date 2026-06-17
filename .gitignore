@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.open-next/
+.wrangler/
+out/
+*.log
+.DS_Store
+.dev.vars
+.env*.local
+next-env.d.ts
+coverage/
