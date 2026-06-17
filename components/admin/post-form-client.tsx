@@ -2,7 +2,7 @@
 
 import { Markdown } from '@/components/markdown';
 import { slugify } from '@/lib/slug';
-import { cn } from '@/lib/utils';
+import { aestInputToIso, cn } from '@/lib/utils';
 import { useState } from 'react';
 
 export interface PostFormInitial {
@@ -11,7 +11,7 @@ export interface PostFormInitial {
   body: string;
   excerpt: string;
   status: 'draft' | 'published';
-  /** datetime-local format (YYYY-MM-DDTHH:mm), local timezone */
+  /** datetime-local format (YYYY-MM-DDTHH:mm) in AEST (Australia/Sydney) */
   publishedAtLocal: string;
 }
 
@@ -26,8 +26,9 @@ const EMPTY: PostFormInitial = {
 
 /**
  * Post edit form (shared by create and edit). `action` is a Server Action passed from the server.
- * The markdown body uses a textarea with live preview. Before submission, datetime-local is converted
- * to UTC ISO and written to a hidden field publishedAtIso (used directly on the server to avoid timezone ambiguity).
+ * The markdown body uses a textarea with live preview. Before submission, the datetime-local value
+ * (interpreted as AEST/Australia/Sydney) is converted to UTC ISO and written to a hidden field
+ * publishedAtIso (used directly on the server to avoid timezone ambiguity).
  */
 export function PostForm({
   action,
@@ -45,10 +46,7 @@ export function PostForm({
   const [publishedAtLocal, setPublishedAtLocal] = useState(initial.publishedAtLocal);
   const [showPreview, setShowPreview] = useState(false);
 
-  const publishedAtIso =
-    publishedAtLocal && !Number.isNaN(new Date(publishedAtLocal).getTime())
-      ? new Date(publishedAtLocal).toISOString()
-      : '';
+  const publishedAtIso = aestInputToIso(publishedAtLocal);
 
   const inputCls =
     'w-full rounded-md border border-border bg-bg px-3 py-2 text-[14px] text-text outline-none focus:border-border-strong';
@@ -173,7 +171,7 @@ export function PostForm({
             {status === 'published' && publishedAtIso === ''
               ? 'Leave blank = publish immediately'
               : publishedAtIso
-                ? `UTC: ${publishedAtIso}`
+                ? `UTC: ${publishedAtIso} (AEST input)`
                 : ''}
           </p>
         </div>
