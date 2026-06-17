@@ -27,8 +27,10 @@ export async function GET(req: Request) {
     return Response.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  // Invalidates all routes under the root layout (list + all post detail pages).
+  // Invalidates all page routes under the root layout (list + all post detail pages).
   revalidatePath('/', 'layout');
+  // Route handlers are not covered by layout-scoped revalidation; invalidate explicitly.
+  revalidatePath('/feed.xml');
 
   return Response.json({ revalidated: true, at: new Date().toISOString() });
 }

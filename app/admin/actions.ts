@@ -20,8 +20,10 @@ function parseForm(form: FormData): PostInput {
 }
 
 function refresh() {
-  // Invalidates all routes under the root layout (list + all post detail pages + admin).
+  // Invalidates all page routes under the root layout (list + all post detail pages + admin).
   revalidatePath('/', 'layout');
+  // Route handlers are not covered by layout-scoped revalidation; invalidate explicitly.
+  revalidatePath('/feed.xml');
 }
 
 export async function createPostAction(form: FormData): Promise<void> {
